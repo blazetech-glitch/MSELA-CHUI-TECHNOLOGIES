@@ -36,8 +36,14 @@ const newsletterContext = {
 // Function to send random image from /scs folder
 async function sendAliveImage(client, dest, caption, repondre) {
     const scsFolder = path.join(__dirname, "../scs");
-    const images = fs.readdirSync(scsFolder).filter(f => /^menu\d+\.jpg$/i.test(f));
-    if (images.length === 0) return repondre("📁 No images found in /scs folder.");
+    const images = fs.existsSync(scsFolder)
+        ? fs.readdirSync(scsFolder, { withFileTypes: true })
+            .filter(entry => entry.isFile() && /\.(jpe?g|png|webp)$/i.test(entry.name))
+            .map(entry => entry.name)
+        : [];
+    // MSELA assets use leopard-menu-N.jpg rather than menuN.jpg.
+    // If an image is unavailable, keep alive useful by returning the status text.
+    if (images.length === 0) return repondre(caption);
 
     const randomImage = images[Math.floor(Math.random() * images.length)];
     const imagePath = path.join(scsFolder, randomImage);

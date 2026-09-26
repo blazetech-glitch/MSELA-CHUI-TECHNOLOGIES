@@ -4,15 +4,24 @@ const fancy = require("../../devblaze/style");
 const pkg = require("@whiskeysockets/baileys");
 const { generateWAMessageFromContent, proto } = pkg;
 
-function renderAllPreviews(text) {
-  const styles = Object.keys(fancy)
-    .filter((key) => /^\d+$/.test(key))
+function getStyles() {
+  return Object.keys(fancy)
+    .filter((key) => /^\d+$/.test(key) && fancy[key] && typeof fancy[key] === 'object')
     .map(Number)
     .sort((a, b) => a - b);
+}
+
+function renderStyle(style, text) {
+  // Clone the map so every preview is rendered independently.
+  return fancy.apply({ ...fancy[style] }, String(text));
+}
+
+function renderAllPreviews(text) {
+  const styles = getStyles();
   return [
     '*Available Fancy previews for 𝐌𝐒𝐄𝐋𝐀-𝐂𝐇𝐔𝐈-𝐗𝐌𝐃:*',
     '',
-    ...styles.map((style) => `${style + 1}. ${fancy.apply(fancy[style], text)}`),
+    ...styles.map((style) => `${String(style + 1).padStart(2, '0')} │ ${renderStyle(style, text)}`),
     '',
     'Use: .fancy <number> <text> for one style.',
     'Use: .fancy all <text> to preview every style.'
@@ -78,10 +87,10 @@ blazetz(
       }
 
       const styleNumber = Number(id);
-      const styleKeys = Object.keys(fancy).filter((key) => /^\d+$/.test(key)).map(Number);
-      const selectedStyle = Number.isInteger(styleNumber) && styleKeys.includes(styleNumber - 1) ? fancy[styleNumber - 1] : null;
-      const resultText = selectedStyle
-        ? fancy.apply(selectedStyle, text)
+      const styleKeys = getStyles();
+      const selectedStyle = Number.isInteger(styleNumber) && styleKeys.includes(styleNumber - 1) ? styleNumber - 1 : null;
+      const resultText = selectedStyle !== null
+        ? renderStyle(selectedStyle, text)
         : `Style not found. Choose one of the ${styleKeys.length} styles shown in the list.`;
 
       // 🔘 COPY BUTTON
