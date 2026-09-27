@@ -27,7 +27,7 @@ blazetz({ nomCom: "repo", categorie: "General" }, async (dest, client, commandeO
     const scsFolder = path.join(__dirname, "../scs");
     const images = fs.readdirSync(scsFolder).filter(f => /^leopard-menu-\d+\.png$/i.test(f));
     const randomImage = images[Math.floor(Math.random() * images.length)];
-    const imagePath = path.join(scsFolder, randomImage);
+    const imagePath = randomImage ? path.join(scsFolder, randomImage) : null;
 
     try {
         const response = await axios.get(repoUrl);
@@ -48,21 +48,24 @@ blazetz({ nomCom: "repo", categorie: "General" }, async (dest, client, commandeO
 ╰══════════════⊷❍
         `;
 
-        // Send repository info with random image
-        await client.sendMessage(dest, {
-            image: { url: imagePath },
-            caption: repoInfo,
-            footer: "*𝐌𝐒𝐄𝐋𝐀-𝐂𝐇𝐔𝐈-𝐗𝐌𝐃 GitHub Repository*",
-            contextInfo: {
-                forwardingScore: 999,
-                isForwarded: true,
-                forwardedNewsletterMessageInfo: {
-                    newsletterJid: "120363405040601085@newsletter",
-                    newsletterName: "𝐌𝐒𝐄𝐋𝐀-𝐂𝐇𝐔𝐈-𝐗𝐌𝐃",
-                    serverMessageId: 1
-                }
-            },
-        }, { quoted: quotedContact });
+        const contextInfo = {
+            forwardingScore: 999,
+            isForwarded: true,
+            forwardedNewsletterMessageInfo: {
+                newsletterJid: "120363405040601085@newsletter",
+                newsletterName: "𝐌𝐒𝐄𝐋𝐀-𝐂𝐇𝐔𝐈-𝐗𝐌𝐃",
+                serverMessageId: 1
+            }
+        };
+        const message = imagePath
+            ? {
+                image: { url: imagePath },
+                caption: repoInfo,
+                footer: "*𝐌𝐒𝐄𝐋𝐀-𝐂𝐇𝐔𝐈-𝐗𝐌𝐃 GitHub Repository*",
+                contextInfo
+            }
+            : { text: repoInfo, contextInfo };
+        await client.sendMessage(dest, message, { quoted: quotedContact });
 
     } catch (e) {
         console.log("❌ Error fetching repository data: " + e);
