@@ -1,23 +1,7 @@
 const { blazetz } = require("../../devblaze/blazetz");
 const fancy = require("../../devblaze/style");
-
 const pkg = require("@whiskeysockets/baileys");
 const { generateWAMessageFromContent, proto } = pkg;
-
-function renderAllPreviews(text) {
-  const styles = Object.keys(fancy)
-    .filter((key) => /^\d+$/.test(key))
-    .map(Number)
-    .sort((a, b) => a - b);
-  return [
-    '*Available Fancy previews for 𝐌𝐒𝐄𝐋𝐀-𝐂𝐇𝐔𝐈-𝐗𝐌𝐃:*',
-    '',
-    ...styles.map((style) => `${style + 1}. ${fancy.apply(fancy[style], text)}`),
-    '',
-    'Use: .fancy <number> <text> for one style.',
-    'Use: .fancy all <text> to preview every style.'
-  ].join('\n');
-}
 
 // VCard Contact (status style)
 const quotedContact = {
@@ -46,45 +30,30 @@ blazetz(
     reaction: "✍️"
   },
   async (from, conn, context) => {
-    const { arg, repondre, prefixe, ms } = context;
-
-    const first = String(arg[0] || '').toLowerCase();
-    const allMode = first === 'all' || first === 'styles' || first === 'preview';
-    const id = String(arg[0] || '').match(/^\d+$/)?.[0];
-    const text = id || allMode ? arg.slice(1).join(" ") : arg.join(" ");
+    const { arg, repondre, prefixe } = context;
+    const id = arg[0]?.match(/\d+/)?.join("");
+    const text = arg.slice(1).join(" ");
 
     try {
-      // Hakuna ID au text → onyesha list
-      if (!text) {
+      // Show the available styles when no style number or text is supplied.
+      if (!id || !text) {
         return await conn.sendMessage(
           from,
           {
             text:
               `Example:\n${prefixe}fancy 10 𝐌selachui\n\n` +
-              renderAllPreviews("𝐌𝐒𝐄𝐋𝐀-𝐂𝐇𝐔𝐈-𝐗𝐌𝐃")
+              fancy.list("𝐌𝐒𝐄𝐋𝐀-𝐂𝐇𝐔𝐈-𝐗𝐌𝐃", fancy)
           },
           { quoted: quotedContact }
         );
       }
 
-      // With plain text, return every available style so deployments do not
-      // appear to support only one font. A numeric first argument selects one.
-      if (!id || allMode) {
-        return await conn.sendMessage(
-          from,
-          { text: renderAllPreviews(text) },
-          { quoted: quotedContact }
-        );
-      }
-
-      const styleNumber = Number(id);
-      const styleKeys = Object.keys(fancy).filter((key) => /^\d+$/.test(key)).map(Number);
-      const selectedStyle = Number.isInteger(styleNumber) && styleKeys.includes(styleNumber - 1) ? fancy[styleNumber - 1] : null;
+      // Match Blaze XMD: the number selects the corresponding style.
+      const selectedStyle = fancy[parseInt(id, 10) - 1];
       const resultText = selectedStyle
         ? fancy.apply(selectedStyle, text)
-        : `Style not found. Choose one of the ${styleKeys.length} styles shown in the list.`;
+        : "Style not found";
 
-      // 🔘 COPY BUTTON
       const buttons = [
         {
           name: "cta_copy",
@@ -124,11 +93,9 @@ blazetz(
       };
 
       const waMsg = generateWAMessageFromContent(from, viewOnceMessage, {});
-
       await conn.relayMessage(from, waMsg.message, {
         messageId: waMsg.key.id
       });
-
     } catch (error) {
       console.error("FANCY ERROR:", error);
       await repondre("An error occurred while processing your request.");
