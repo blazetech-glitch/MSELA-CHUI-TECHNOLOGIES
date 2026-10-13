@@ -8,9 +8,9 @@
   "stack": "heroku-24",
   "env": {
     "SESSION_ID": {
-      "description": "Your session ID — the code you receive after scanning the QR code / pairing.",
+      "description": "Optional WhatsApp session ID. Not required for the web status page.",
       "value": "",
-      "required": true
+      "required": false
     },
     "PREFIX": {
       "description": "Command prefix (can also be changed later with .setprefix).",
@@ -44,8 +44,12 @@
     }
   },
   "formation": {
+    "web": {
+      "quantity": 0,
+      "size": "basic"
+    },
     "worker": {
-      "quantity": 1,
+      "quantity": 0,
       "size": "basic"
     }
   },
